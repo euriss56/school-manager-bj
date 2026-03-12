@@ -53,10 +53,10 @@ export default function RegisterSchool() {
           adresse: form.adresse,
           telephone: form.telephone,
           email: form.email,
-          plan: form.plan,
-          statut: "en_attente",
+          plan: form.plan as "basique" | "pro" | "premium",
+          statut: "en_attente" as const,
           code_unique: code,
-        });
+        } as any);
         if (schoolError) throw schoolError;
 
         // Get school id
