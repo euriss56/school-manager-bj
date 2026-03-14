@@ -18,7 +18,7 @@ export default function AdminPaiements() {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("suivi");
+  const [activeTab, setActiveTab] = useState("enregistrer");
   const [fraisOpen, setFraisOpen] = useState(false);
   const [paiementOpen, setPaiementOpen] = useState(false);
   const [search, setSearch] = useState("");
