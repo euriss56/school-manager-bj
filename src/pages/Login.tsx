@@ -33,13 +33,13 @@ export default function Login() {
         .single();
 
       const roleRoutes: Record<string, string> = {
-        superadmin: "/superadmin",
-        admin: "/admin",
-        enseignant: "/enseignant",
-        parent: "/parent",
-        etudiant: "/etudiant",
-      };
-
+  superadmin: "/superadmin",
+  admin: "/admin",
+  enseignant: "/enseignant",
+  parent: "/parent",
+  etudiant: "/etudiant",
+  comptable: "/comptable",
+};
       navigate(roleRoutes[profile?.role || "etudiant"] || "/");
     } catch (error: any) {
       toast({
