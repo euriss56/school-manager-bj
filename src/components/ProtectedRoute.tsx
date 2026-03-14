@@ -7,6 +7,17 @@ interface ProtectedRouteProps {
   allowedRoles: string[];
 }
 
+function getRoleRedirect(role: string): string {
+  switch (role) {
+    case "superadmin": return "/superadmin";
+    case "admin": return "/admin";
+    case "enseignant": return "/enseignant";
+    case "parent": return "/parent";
+    case "etudiant": return "/etudiant";
+    default: return "/login";
+  }
+}
+
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
 
@@ -22,7 +33,10 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   if (!user) return <Navigate to="/login" replace />;
-  if (profile && !allowedRoles.includes(profile.role)) return <Navigate to="/login" replace />;
+  
+  if (profile && !allowedRoles.includes(profile.role)) {
+    return <Navigate to={getRoleRedirect(profile.role)} replace />;
+  }
 
   return <>{children}</>;
 }
