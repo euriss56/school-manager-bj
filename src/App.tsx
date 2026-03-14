@@ -51,6 +51,11 @@ import EtudiantNotes from "./pages/etudiant/EtudiantNotes";
 import EtudiantEmploiDuTemps from "./pages/etudiant/EtudiantEmploiDuTemps";
 import EtudiantMessagerie from "./pages/etudiant/EtudiantMessagerie";
 
+// Comptable pages
+import ComptableLayout from "./pages/comptable/ComptableLayout";
+import ComptableDashboard from "./pages/comptable/ComptableDashboard";
+import ComptablePaiements from "./pages/comptable/ComptablePaiements";
+
 // Super Admin
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 
@@ -110,6 +115,12 @@ const App = () => (
               <Route path="notes" element={<EtudiantNotes />} />
               <Route path="emploi-du-temps" element={<EtudiantEmploiDuTemps />} />
               <Route path="messagerie" element={<EtudiantMessagerie />} />
+            </Route>
+
+            {/* Comptable routes */}
+            <Route path="/comptable" element={<ProtectedRoute allowedRoles={["comptable"]}><ComptableLayout /></ProtectedRoute>}>
+              <Route index element={<ComptableDashboard />} />
+              <Route path="paiements" element={<ComptablePaiements />} />
             </Route>
 
             {/* Super Admin routes */}
