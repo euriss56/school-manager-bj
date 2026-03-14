@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, CreditCard, Receipt, TrendingUp } from "lucide-react";
+import { generateRecu } from "@/lib/generateRecu";
 
 export default function AdminPaiements() {
   const { profile } = useAuth();
@@ -156,6 +157,23 @@ export default function AdminPaiements() {
     const labels: Record<string, string> = { especes: "Espèces", mtn_money: "MTN Money", moov_money: "Moov Money", virement: "Virement" };
     return <Badge variant="outline">{labels[m] || m}</Badge>;
   };
+
+  const handleRecu = (p: any) => {
+  generateRecu({
+    recu_numero: p.recu_numero || "N/A",
+    date_paiement: p.date_paiement,
+    eleve_nom: p.eleves?.nom || "",
+    eleve_prenom: p.eleves?.prenom || "",
+    matricule: p.eleves?.matricule || "",
+    classe: p.eleves?.classes?.nom || "",
+    frais_nom: p.frais_types?.nom || "",
+    montant_paye: Number(p.montant_paye),
+    mode_paiement: p.mode_paiement,
+    school_nom: "École Test Bénin",
+    school_ville: "Cotonou",
+    enregistre_par: profile?.prenom + " " + profile?.nom,
+  });
+};
 
   return (
     <div className="space-y-6">
