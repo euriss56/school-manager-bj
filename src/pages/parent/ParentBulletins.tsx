@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Home, FileText, CreditCard, Calendar, Clock, MessageSquare } from "lucide-react";
+import { Home, FileText, CreditCard, Calendar, Clock, MessageSquare, ArrowLeft } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -95,7 +96,9 @@ export default function ParentBulletins() {
           </div>
         ) : (
           <div className="space-y-4">
-            <Button variant="ghost" onClick={() => setSelectedBulletin(null)}>← Retour</Button>
+            <Button variant="ghost" onClick={() => setSelectedBulletin(null)}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+            </Button>
             <Card>
               <CardHeader>
                 <CardTitle className="font-sans">
@@ -147,9 +150,4 @@ export default function ParentBulletins() {
       </div>
     </DashboardLayout>
   );
-}
-
-function Button(props: any) {
-  const { default: Btn } = require("@/components/ui/button");
-  return <Btn {...props} />;
 }
