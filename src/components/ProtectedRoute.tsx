@@ -14,6 +14,7 @@ function getRoleRedirect(role: string): string {
     case "enseignant": return "/enseignant";
     case "parent": return "/parent";
     case "etudiant": return "/etudiant";
+    case "comptable": return "/comptable";
     default: return "/login";
   }
 }
