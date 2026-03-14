@@ -26,10 +26,32 @@ import AdminMessagerie from "./pages/admin/AdminMessagerie";
 import AdminStatistiques from "./pages/admin/AdminStatistiques";
 import AdminParametres from "./pages/admin/AdminParametres";
 
-// Other role dashboards
+// Enseignant pages
+import EnseignantLayout from "./pages/enseignant/EnseignantLayout";
 import EnseignantDashboard from "./pages/enseignant/EnseignantDashboard";
+import EnseignantClasses from "./pages/enseignant/EnseignantClasses";
+import EnseignantNotes from "./pages/enseignant/EnseignantNotes";
+import EnseignantEmploiDuTemps from "./pages/enseignant/EnseignantEmploiDuTemps";
+import EnseignantMessagerie from "./pages/enseignant/EnseignantMessagerie";
+import EnseignantRessources from "./pages/enseignant/EnseignantRessources";
+
+// Parent pages
+import ParentLayout from "./pages/parent/ParentLayout";
 import ParentDashboard from "./pages/parent/ParentDashboard";
+import ParentBulletins from "./pages/parent/ParentBulletins";
+import ParentPaiements from "./pages/parent/ParentPaiements";
+import ParentEmploiDuTemps from "./pages/parent/ParentEmploiDuTemps";
+import ParentAbsences from "./pages/parent/ParentAbsences";
+import ParentMessagerie from "./pages/parent/ParentMessagerie";
+
+// Etudiant pages
+import EtudiantLayout from "./pages/etudiant/EtudiantLayout";
 import EtudiantDashboard from "./pages/etudiant/EtudiantDashboard";
+import EtudiantNotes from "./pages/etudiant/EtudiantNotes";
+import EtudiantEmploiDuTemps from "./pages/etudiant/EtudiantEmploiDuTemps";
+import EtudiantMessagerie from "./pages/etudiant/EtudiantMessagerie";
+
+// Super Admin
 import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
 
 const queryClient = new QueryClient();
@@ -63,13 +85,32 @@ const App = () => (
             </Route>
 
             {/* Enseignant routes */}
-            <Route path="/enseignant" element={<ProtectedRoute allowedRoles={["enseignant"]}><EnseignantDashboard /></ProtectedRoute>} />
+            <Route path="/enseignant" element={<ProtectedRoute allowedRoles={["enseignant"]}><EnseignantLayout /></ProtectedRoute>}>
+              <Route index element={<EnseignantDashboard />} />
+              <Route path="classes" element={<EnseignantClasses />} />
+              <Route path="notes" element={<EnseignantNotes />} />
+              <Route path="emploi-du-temps" element={<EnseignantEmploiDuTemps />} />
+              <Route path="messagerie" element={<EnseignantMessagerie />} />
+              <Route path="ressources" element={<EnseignantRessources />} />
+            </Route>
 
             {/* Parent routes */}
-            <Route path="/parent" element={<ProtectedRoute allowedRoles={["parent"]}><ParentDashboard /></ProtectedRoute>} />
+            <Route path="/parent" element={<ProtectedRoute allowedRoles={["parent"]}><ParentLayout /></ProtectedRoute>}>
+              <Route index element={<ParentDashboard />} />
+              <Route path="bulletins" element={<ParentBulletins />} />
+              <Route path="paiements" element={<ParentPaiements />} />
+              <Route path="emploi-du-temps" element={<ParentEmploiDuTemps />} />
+              <Route path="absences" element={<ParentAbsences />} />
+              <Route path="messagerie" element={<ParentMessagerie />} />
+            </Route>
 
             {/* Etudiant routes */}
-            <Route path="/etudiant" element={<ProtectedRoute allowedRoles={["etudiant"]}><EtudiantDashboard /></ProtectedRoute>} />
+            <Route path="/etudiant" element={<ProtectedRoute allowedRoles={["etudiant"]}><EtudiantLayout /></ProtectedRoute>}>
+              <Route index element={<EtudiantDashboard />} />
+              <Route path="notes" element={<EtudiantNotes />} />
+              <Route path="emploi-du-temps" element={<EtudiantEmploiDuTemps />} />
+              <Route path="messagerie" element={<EtudiantMessagerie />} />
+            </Route>
 
             {/* Super Admin routes */}
             <Route path="/superadmin" element={<ProtectedRoute allowedRoles={["superadmin"]}><SuperAdminDashboard /></ProtectedRoute>} />
