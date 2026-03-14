@@ -43,8 +43,9 @@ export default function Login() {
       };
 
       console.log("Role détecté:", role);
-      navigate(roleRoutes[role] || "/");
-
+console.log("Route:", roleRoutes[role]);
+alert("Role: " + role + " | Route: " + roleRoutes[role]);
+navigate(roleRoutes[role] || "/");
     } catch (error: any) {
       toast({
         variant: "destructive",
