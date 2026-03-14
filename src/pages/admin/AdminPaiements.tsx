@@ -77,7 +77,6 @@ export default function AdminPaiements() {
     enabled: !!schoolId,
   });
 
-  // Create frais type
   const createFrais = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("frais_types").insert({
@@ -99,7 +98,6 @@ export default function AdminPaiements() {
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
-  // Record payment
   const createPaiement = useMutation({
     mutationFn: async () => {
       const recuNum = `REC-${Date.now().toString(36).toUpperCase()}`;
@@ -124,7 +122,6 @@ export default function AdminPaiements() {
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
-  // Compute student payment summaries
   const studentSummaries = eleves?.map(eleve => {
     const applicableFrais = fraisTypes?.filter(f => !f.classe_id || f.classe_id === eleve.classe_id) || [];
     const totalDu = applicableFrais.reduce((s, f) => s + Number(f.montant), 0);
@@ -159,27 +156,26 @@ export default function AdminPaiements() {
   };
 
   const handleRecu = (p: any) => {
-  generateRecu({
-    recu_numero: p.recu_numero || "N/A",
-    date_paiement: p.date_paiement,
-    eleve_nom: p.eleves?.nom || "",
-    eleve_prenom: p.eleves?.prenom || "",
-    matricule: p.eleves?.matricule || "",
-    classe: p.eleves?.classes?.nom || "",
-    frais_nom: p.frais_types?.nom || "",
-    montant_paye: Number(p.montant_paye),
-    mode_paiement: p.mode_paiement,
-    school_nom: "École Test Bénin",
-    school_ville: "Cotonou",
-    enregistre_par: profile?.prenom + " " + profile?.nom,
-  });
-};
+    generateRecu({
+      recu_numero: p.recu_numero || "N/A",
+      date_paiement: p.date_paiement,
+      eleve_nom: p.eleves?.nom || "",
+      eleve_prenom: p.eleves?.prenom || "",
+      matricule: p.eleves?.matricule || "",
+      classe: p.eleves?.classes?.nom || "",
+      frais_nom: p.frais_types?.nom || "",
+      montant_paye: Number(p.montant_paye),
+      mode_paiement: p.mode_paiement,
+      school_nom: "École Test Bénin",
+      school_ville: "Cotonou",
+      enregistre_par: profile?.prenom + " " + profile?.nom,
+    });
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Paiements & Frais scolaires</h1>
 
-      {/* Stats cards */}
       <div className="grid sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -336,7 +332,7 @@ export default function AdminPaiements() {
                 <DialogContent>
                   <DialogHeader><DialogTitle>Configurer un frais</DialogTitle></DialogHeader>
                   <div className="space-y-4 py-4">
-                    <div className="space-y-2"><Label>Nom du frais</Label><Input placeholder="Ex: Frais d'inscription" value={fraisForm.nom} onChange={e => setFraisForm(f => ({ ...f, nom: e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>Nom du frais</Label><Input placeholder="Ex: Frais inscription" value={fraisForm.nom} onChange={e => setFraisForm(f => ({ ...f, nom: e.target.value }))} /></div>
                     <div className="space-y-2"><Label>Montant (FCFA)</Label><Input type="number" value={fraisForm.montant} onChange={e => setFraisForm(f => ({ ...f, montant: e.target.value }))} /></div>
                     <div className="space-y-2">
                       <Label>Classe (optionnel)</Label>
@@ -404,11 +400,12 @@ export default function AdminPaiements() {
                     <TableHead>Type frais</TableHead>
                     <TableHead className="text-right">Montant</TableHead>
                     <TableHead>Mode</TableHead>
+                    <TableHead>Reçu</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paiements?.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Aucun paiement</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Aucun paiement</TableCell></TableRow>
                   ) : paiements?.map(p => (
                     <TableRow key={p.id}>
                       <TableCell>{new Date(p.date_paiement).toLocaleDateString("fr-FR")}</TableCell>
@@ -417,6 +414,11 @@ export default function AdminPaiements() {
                       <TableCell>{(p as any).frais_types?.nom}</TableCell>
                       <TableCell className="text-right font-bold">{Number(p.montant_paye).toLocaleString("fr-FR")} FCFA</TableCell>
                       <TableCell>{modeBadge(p.mode_paiement)}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline" onClick={() => handleRecu(p)}>
+                          <Receipt className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
