@@ -22,7 +22,6 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      // Get user profile to determine role
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non trouvé");
 
@@ -32,15 +31,20 @@ export default function Login() {
         .eq("id", user.id)
         .single();
 
+      const role = String(profile?.role || "etudiant").trim();
+
       const roleRoutes: Record<string, string> = {
-  superadmin: "/superadmin",
-  admin: "/admin",
-  enseignant: "/enseignant",
-  parent: "/parent",
-  etudiant: "/etudiant",
-  comptable: "/comptable",
-};
-      navigate(roleRoutes[profile?.role || "etudiant"] || "/");
+        superadmin: "/superadmin",
+        admin: "/admin",
+        enseignant: "/enseignant",
+        parent: "/parent",
+        etudiant: "/etudiant",
+        comptable: "/comptable",
+      };
+
+      console.log("Role détecté:", role);
+      navigate(roleRoutes[role] || "/");
+
     } catch (error: any) {
       toast({
         variant: "destructive",
