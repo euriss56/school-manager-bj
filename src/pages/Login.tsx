@@ -44,7 +44,7 @@ export default function Login() {
 
       console.log("Role détecté:", role);
 console.log("Route:", roleRoutes[role]);
-alert("Role: " + role + " | Route: " + roleRoutes[role]);
+
 navigate(roleRoutes[role] || "/");
     } catch (error: any) {
       toast({
