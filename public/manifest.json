@@ -1,0 +1,22 @@
+{
+  "name": "SchoolManager BJ",
+  "short_name": "SchoolManager",
+  "description": "Logiciel de gestion scolaire pour le Bénin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f524a",
+  "theme_color": "#0f524a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
