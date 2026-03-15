@@ -45,9 +45,10 @@ export async function createFedaPayTransaction(
     const data = await response.json();
     console.log('FedaPay response:', data);
 
-    if (data.v1_transaction?.id) {
+    const txn = data.v1_transaction || data['v1/transaction'];
+    if (txn?.id) {
       const tokenResponse = await fetch(
-        `${baseUrl}/transactions/${data.v1_transaction.id}/token`,
+        `${baseUrl}/transactions/${txn.id}/token`,
         {
           method: 'POST',
           headers: {
@@ -61,7 +62,7 @@ export async function createFedaPayTransaction(
       if (tokenData.token?.token) {
         return {
           url: `https://checkout.fedapay.com/${tokenData.token.token}`,
-          id: data.v1_transaction.id.toString(),
+          id: txn.id.toString(),
         };
       }
     }
