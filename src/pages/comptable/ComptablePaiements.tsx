@@ -1,103 +1,95 @@
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { CreditCard, Receipt, Search, Smartphone } from "lucide-react";
-import { generateRecu } from "@/lib/generateRecu";
-import { createFedaPayTransaction } from "@/lib/fedapay";
-
-export default function ComptablePaiements() {
-  const { profile } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("enregistrer");
-  const [eleveSearch, setEleveSearch] = useState("");
-  const [search, setSearch] = useState("");
-  const [loadingFeda, setLoadingFeda] = useState(false);
-  const [paiementForm, setPaiementForm] = useState({
-    eleve_id: "",
-    frais_type_id: "",
-    montant_paye: "",
-    mode_paiement: "especes" as const,
-    reference: "",
-  });
-
-  const schoolId = profile?.school_id;
-
-  const { data: school } = useQuery({
-    queryKey: ["school", schoolId],
-    queryFn: async () => {
-      const { data } = await supabase.from("schools").select("*").eq("id", schoolId!).single();
-      return data;
-    },
-    enabled: !!schoolId,
-  });
-
-  const { data: eleves } = useQuery({
-    queryKey: ["eleves-comptable", schoolId],
-    queryFn: async () => {
-      const { data } = await supabase.from("eleves").select("*, classes(nom)").eq("school_id", schoolId!).eq("statut_inscription", "valide").order("nom");
-      return data || [];
-    },
-    enabled: !!schoolId,
-  });
-
-  const { data: fraisTypes } = useQuery({
-    queryKey: ["frais-types-comptable", schoolId],
-    queryFn: async () => {
-      const { data } = await supabase.from("frais_types").select("*").eq("school_id", schoolId!);
-      return data || [];
-    },
-    enabled: !!schoolId,
-  });
-
-  const { data: paiements } = useQuery({
-    queryKey: ["paiements-liste-comptable", schoolId],
-    queryFn: async () => {
-      const { data } = await supabase.from("paiements").select("*, eleves(prenom, nom, matricule, classes(nom)), frais_types(nom, montant)").eq("school_id", schoolId!).order("date_paiement", { ascending: false });
-      return data || [];
-    },
-    enabled: !!schoolId,
-  });
-
-  const createPaiement = useMutation({
-    mutationFn: async () => {
-      const recuNum = `REC-${Date.now().toString(36).toUpperCase()}`;
-      const { error } = await supabase.from("paiements").insert({
-        school_id: schoolId!,
-        eleve_id: paiementForm.eleve_id,
-        frais_type_id: paiementForm.frais_type_id,
-        montant_paye: parseFloat(paiementForm.montant_paye),
-        mode_paiement: paiementForm.mode_paiement as any,
-        reference: paiementForm.reference || null,
-        recu_numero: recuNum,
-        enregistre_par: profile!.id,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["paiements-liste-comptable"] });
-      queryClient.invalidateQueries({ queryKey: ["paiements-comptable"] });
-      setPaiementForm({ eleve_id: "", frais_type_id: "", montant_paye: "", mode_paiement: "especes", reference: "" });
-      setEleveSearch("");
-      toast({ title: "Paiement enregistré avec succès !" });
-    },
-    onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
-  });
-
-  const handleMobilePaiement = async () => {
-    if (!paiementForm.eleve_id || !paiementForm.frais_type_id || !paiementForm.montant_paye) {
-      toast({ variant: "destructive", title: "Erreur", description: "Remplissez tous les champs obligatoires" });
-      return;
-    }
-    if (!school?.fedapay_public_key) {
-      toast({ variant: "destructive", title: "FedaPay non configuré", description: "Configurez vos
+{
+  "name": "vite_react_shadcn_ts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/playfair-display": "^5.2.8",
+    "@hookform/resolvers": "^3.10.0",
+    "@radix-ui/react-accordion": "^1.2.11",
+    "@radix-ui/react-alert-dialog": "^1.1.14",
+    "@radix-ui/react-aspect-ratio": "^1.1.7",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-checkbox": "^1.3.2",
+    "@radix-ui/react-collapsible": "^1.1.11",
+    "@radix-ui/react-context-menu": "^2.2.15",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-hover-card": "^1.1.14",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-menubar": "^1.1.15",
+    "@radix-ui/react-navigation-menu": "^1.2.13",
+    "@radix-ui/react-popover": "^1.1.14",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-radio-group": "^1.3.7",
+    "@radix-ui/react-scroll-area": "^1.2.9",
+    "@radix-ui/react-select": "^2.2.5",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slider": "^1.3.5",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.2.5",
+    "@radix-ui/react-tabs": "^1.1.12",
+    "@radix-ui/react-toast": "^1.2.14",
+    "@radix-ui/react-toggle": "^1.1.9",
+    "@radix-ui/react-toggle-group": "^1.1.10",
+    "@radix-ui/react-tooltip": "^1.2.7",
+    "@supabase/supabase-js": "^2.99.1",
+    "@tanstack/react-query": "^5.83.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "date-fns": "^3.6.0",
+    "embla-carousel-react": "^8.6.0",
+    "input-otp": "^1.4.2",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
+    "lucide-react": "^0.462.0",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.61.1",
+    "react-resizable-panels": "^2.1.9",
+    "react-router-dom": "^6.30.1",
+    "recharts": "^3.8.0",
+    "sonner": "^1.7.4",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
+    "vaul": "^0.9.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.57.0",
+    "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^22.16.5",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react-swc": "^3.11.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.32.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^15.15.0",
+    "jsdom": "^20.0.3",
+    "lovable-tagger": "^1.1.13",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vite": "^5.4.19",
+    "vitest": "^3.2.4"
+  }
+}
