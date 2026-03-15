@@ -11,9 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Save, Lock, FileText, Download } from "lucide-react";
+import { generateBulletin } from "@/lib/generateBulletin";
 
 export default function AdminNotes() {
   const { profile } = useAuth();
@@ -24,8 +24,6 @@ export default function AdminNotes() {
   const [selectedMatiere, setSelectedMatiere] = useState("");
   const [selectedPeriode, setSelectedPeriode] = useState("");
   const [notesData, setNotesData] = useState<Record<string, { ds1: string; ds2: string; compo: string; appreciation: string }>>({});
-
-  // Dialog states
   const [periodeOpen, setPeriodeOpen] = useState(false);
   const [matiereOpen, setMatiereOpen] = useState(false);
   const [periodeForm, setPeriodeForm] = useState({ libelle: "", date_debut: "", date_fin: "" });
@@ -35,7 +33,6 @@ export default function AdminNotes() {
 
   const schoolId = profile?.school_id;
 
-  // Fetch active year
   const { data: activeAnnee } = useQuery({
     queryKey: ["active-annee", schoolId],
     queryFn: async () => {
@@ -45,7 +42,6 @@ export default function AdminNotes() {
     enabled: !!schoolId,
   });
 
-  // Fetch classes
   const { data: classes } = useQuery({
     queryKey: ["classes", schoolId],
     queryFn: async () => {
@@ -55,7 +51,6 @@ export default function AdminNotes() {
     enabled: !!schoolId,
   });
 
-  // Fetch periodes
   const { data: periodes } = useQuery({
     queryKey: ["periodes", schoolId],
     queryFn: async () => {
@@ -65,7 +60,6 @@ export default function AdminNotes() {
     enabled: !!schoolId,
   });
 
-  // Fetch matieres
   const { data: matieres } = useQuery({
     queryKey: ["matieres", schoolId],
     queryFn: async () => {
@@ -75,7 +69,6 @@ export default function AdminNotes() {
     enabled: !!schoolId,
   });
 
-  // Fetch eleves for selected class
   const { data: eleves } = useQuery({
     queryKey: ["eleves-classe", selectedClasse],
     queryFn: async () => {
@@ -85,7 +78,6 @@ export default function AdminNotes() {
     enabled: !!selectedClasse,
   });
 
-  // Fetch existing notes
   const { data: existingNotes } = useQuery({
     queryKey: ["notes", selectedClasse, selectedMatiere, selectedPeriode],
     queryFn: async () => {
@@ -97,19 +89,17 @@ export default function AdminNotes() {
     enabled: !!selectedMatiere && !!selectedPeriode && (eleves?.length || 0) > 0,
   });
 
-  // Fetch bulletins
   const { data: bulletins } = useQuery({
     queryKey: ["bulletins", bulletinClasse, bulletinPeriode],
     queryFn: async () => {
       const eleveIds = (await supabase.from("eleves").select("id").eq("classe_id", bulletinClasse).eq("statut_inscription", "valide")).data?.map(e => e.id) || [];
       if (eleveIds.length === 0) return [];
-      const { data } = await supabase.from("bulletins").select("*, eleves(prenom, nom, matricule, classe_id, classes(nom))").eq("periode_id", bulletinPeriode).in("eleve_id", eleveIds).order("rang");
+      const { data } = await supabase.from("bulletins").select("*, eleves(id, prenom, nom, matricule, classe_id, classes(nom))").eq("periode_id", bulletinPeriode).in("eleve_id", eleveIds).order("rang");
       return data || [];
     },
     enabled: !!bulletinClasse && !!bulletinPeriode,
   });
 
-  // Initialize notes data when existing notes load
   useState(() => {
     if (existingNotes && eleves) {
       const init: Record<string, any> = {};
@@ -126,50 +116,31 @@ export default function AdminNotes() {
     }
   });
 
-  // Create periode
   const createPeriode = useMutation({
     mutationFn: async () => {
       if (!activeAnnee) throw new Error("Aucune année scolaire active");
       const { error } = await supabase.from("periodes").insert({
-        school_id: schoolId!,
-        annee_id: activeAnnee.id,
-        libelle: periodeForm.libelle,
-        date_debut: periodeForm.date_debut,
-        date_fin: periodeForm.date_fin,
+        school_id: schoolId!, annee_id: activeAnnee.id,
+        libelle: periodeForm.libelle, date_debut: periodeForm.date_debut, date_fin: periodeForm.date_fin,
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["periodes"] });
-      setPeriodeOpen(false);
-      setPeriodeForm({ libelle: "", date_debut: "", date_fin: "" });
-      toast({ title: "Période créée" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["periodes"] }); setPeriodeOpen(false); setPeriodeForm({ libelle: "", date_debut: "", date_fin: "" }); toast({ title: "Période créée" }); },
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
-  // Create matiere
   const createMatiere = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("matieres").insert({
-        school_id: schoolId!,
-        nom: matiereForm.nom,
-        code: matiereForm.code || null,
-        coefficient: parseFloat(matiereForm.coefficient),
-        classe_id: matiereForm.classe_id || null,
+        school_id: schoolId!, nom: matiereForm.nom, code: matiereForm.code || null,
+        coefficient: parseFloat(matiereForm.coefficient), classe_id: matiereForm.classe_id || null,
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["matieres"] });
-      setMatiereOpen(false);
-      setMatiereForm({ nom: "", code: "", coefficient: "1", classe_id: "" });
-      toast({ title: "Matière créée" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["matieres"] }); setMatiereOpen(false); setMatiereForm({ nom: "", code: "", coefficient: "1", classe_id: "" }); toast({ title: "Matière créée" }); },
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
-  // Save notes
   const saveNotes = useMutation({
     mutationFn: async () => {
       if (!eleves) return;
@@ -181,62 +152,36 @@ export default function AdminNotes() {
         const compo = n.compo ? parseFloat(n.compo) : null;
         const values = [ds1, ds2, compo].filter(v => v !== null) as number[];
         const moyenne = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
-        
         const existing = existingNotes?.find(ex => ex.eleve_id === eleve.id);
         if (existing) {
-          await supabase.from("notes").update({
-            note_ds1: ds1, note_ds2: ds2, note_compo: compo, moyenne,
-            appreciation: n.appreciation || null, saisie_par: profile!.id, date_saisie: new Date().toISOString(),
-          }).eq("id", existing.id);
+          await supabase.from("notes").update({ note_ds1: ds1, note_ds2: ds2, note_compo: compo, moyenne, appreciation: n.appreciation || null, saisie_par: profile!.id, date_saisie: new Date().toISOString() }).eq("id", existing.id);
         } else {
-          await supabase.from("notes").insert({
-            eleve_id: eleve.id, matiere_id: selectedMatiere, periode_id: selectedPeriode,
-            note_ds1: ds1, note_ds2: ds2, note_compo: compo, moyenne,
-            appreciation: n.appreciation || null, saisie_par: profile!.id,
-          });
+          await supabase.from("notes").insert({ eleve_id: eleve.id, matiere_id: selectedMatiere, periode_id: selectedPeriode, note_ds1: ds1, note_ds2: ds2, note_compo: compo, moyenne, appreciation: n.appreciation || null, saisie_par: profile!.id });
         }
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-      toast({ title: "Notes enregistrées avec succès" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["notes"] }); toast({ title: "Notes enregistrées avec succès" }); },
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
-  // Generate bulletins
   const generateBulletins = useMutation({
     mutationFn: async () => {
       if (!bulletinClasse || !bulletinPeriode) throw new Error("Sélectionnez classe et période");
       const { data: elevesData } = await supabase.from("eleves").select("id").eq("classe_id", bulletinClasse).eq("statut_inscription", "valide");
       if (!elevesData?.length) throw new Error("Aucun élève dans cette classe");
-
-      const matieresClasse = matieres?.filter(m => !m.classe_id || m.classe_id === bulletinClasse) || [];
-      
-      // Calculate averages for each student
       const studentAverages: { eleveId: string; moyenne: number }[] = [];
       for (const eleve of elevesData) {
         const { data: notes } = await supabase.from("notes").select("*, matieres(coefficient)").eq("eleve_id", eleve.id).eq("periode_id", bulletinPeriode);
         if (!notes?.length) { studentAverages.push({ eleveId: eleve.id, moyenne: 0 }); continue; }
         let totalCoeff = 0, totalWeighted = 0;
-        notes.forEach(n => {
-          if (n.moyenne !== null) {
-            const coeff = (n as any).matieres?.coefficient || 1;
-            totalWeighted += n.moyenne * coeff;
-            totalCoeff += coeff;
-          }
-        });
+        notes.forEach(n => { if (n.moyenne !== null) { const coeff = (n as any).matieres?.coefficient || 1; totalWeighted += n.moyenne * coeff; totalCoeff += coeff; } });
         studentAverages.push({ eleveId: eleve.id, moyenne: totalCoeff > 0 ? totalWeighted / totalCoeff : 0 });
       }
-
-      // Sort and assign ranks
       studentAverages.sort((a, b) => b.moyenne - a.moyenne);
-      
       for (let i = 0; i < studentAverages.length; i++) {
         const sa = studentAverages[i];
         const rang = i + 1;
         const mention = sa.moyenne >= 16 ? "Très Bien" : sa.moyenne >= 14 ? "Bien" : sa.moyenne >= 12 ? "Assez Bien" : sa.moyenne >= 10 ? "Passable" : "Insuffisant";
-        
         const existing = (await supabase.from("bulletins").select("id").eq("eleve_id", sa.eleveId).eq("periode_id", bulletinPeriode)).data;
         if (existing?.length) {
           await supabase.from("bulletins").update({ moyenne_generale: parseFloat(sa.moyenne.toFixed(2)), rang, mention }).eq("id", existing[0].id);
@@ -245,32 +190,49 @@ export default function AdminNotes() {
         }
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bulletins"] });
-      toast({ title: "Bulletins générés avec succès" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["bulletins"] }); toast({ title: "Bulletins générés avec succès" }); },
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
-  // Publish bulletins
   const publishBulletins = useMutation({
     mutationFn: async () => {
       const ids = bulletins?.map(b => b.id) || [];
-      for (const id of ids) {
-        await supabase.from("bulletins").update({ is_published: true, published_at: new Date().toISOString() }).eq("id", id);
-      }
+      for (const id of ids) { await supabase.from("bulletins").update({ is_published: true, published_at: new Date().toISOString() }).eq("id", id); }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bulletins"] });
-      toast({ title: "Bulletins publiés — visibles par les parents et élèves" });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["bulletins"] }); toast({ title: "Bulletins publiés — visibles par les parents et élèves" }); },
   });
 
+  const handleBulletinPDF = async (bulletin: any) => {
+    const { data: notes } = await supabase.from("notes").select("*, matieres(nom, coefficient)").eq("eleve_id", bulletin.eleves?.id || bulletin.eleve_id).eq("periode_id", bulletinPeriode);
+    const periode = periodes?.find(p => p.id === bulletinPeriode);
+    const totalEleves = bulletins?.length || 1;
+    generateBulletin({
+      eleve_nom: bulletin.eleves?.nom || "",
+      eleve_prenom: bulletin.eleves?.prenom || "",
+      matricule: bulletin.eleves?.matricule || "",
+      classe: bulletin.eleves?.classes?.nom || "",
+      periode: periode?.libelle || "",
+      annee_scolaire: activeAnnee?.libelle || "2025-2026",
+      rang: bulletin.rang || 0,
+      total_eleves: totalEleves,
+      moyenne_generale: Number(bulletin.moyenne_generale) || 0,
+      mention: bulletin.mention || "",
+      school_nom: "École Test Bénin",
+      school_ville: "Cotonou",
+      matieres: (notes || []).map((n: any) => ({
+        nom: n.matieres?.nom || "",
+        coefficient: n.matieres?.coefficient || 1,
+        note_ds1: n.note_ds1,
+        note_ds2: n.note_ds2,
+        note_compo: n.note_compo,
+        moyenne: n.moyenne,
+        appreciation: n.appreciation,
+      })),
+    });
+  };
+
   const updateNoteField = (eleveId: string, field: string, value: string) => {
-    setNotesData(prev => ({
-      ...prev,
-      [eleveId]: { ...(prev[eleveId] || { ds1: "", ds2: "", compo: "", appreciation: "" }), [field]: value },
-    }));
+    setNotesData(prev => ({ ...prev, [eleveId]: { ...(prev[eleveId] || { ds1: "", ds2: "", compo: "", appreciation: "" }), [field]: value } }));
   };
 
   const getMention = (moyenne: number) => {
@@ -286,7 +248,6 @@ export default function AdminNotes() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Notes & Bulletins</h1>
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="saisie">Saisie des notes</TabsTrigger>
@@ -294,9 +255,7 @@ export default function AdminNotes() {
           <TabsTrigger value="bulletins">Bulletins</TabsTrigger>
         </TabsList>
 
-        {/* CONFIG TAB */}
         <TabsContent value="config" className="space-y-6">
-          {/* Periodes */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-sans">Périodes d'évaluation</CardTitle>
@@ -309,9 +268,7 @@ export default function AdminNotes() {
                     <div className="space-y-2"><Label>Date début</Label><Input type="date" value={periodeForm.date_debut} onChange={e => setPeriodeForm(f => ({ ...f, date_debut: e.target.value }))} /></div>
                     <div className="space-y-2"><Label>Date fin</Label><Input type="date" value={periodeForm.date_fin} onChange={e => setPeriodeForm(f => ({ ...f, date_fin: e.target.value }))} /></div>
                   </div>
-                  <Button onClick={() => createPeriode.mutate()} disabled={!periodeForm.libelle || !periodeForm.date_debut || !periodeForm.date_fin || createPeriode.isPending} className="w-full">
-                    {createPeriode.isPending ? "Création..." : "Créer"}
-                  </Button>
+                  <Button onClick={() => createPeriode.mutate()} disabled={!periodeForm.libelle || !periodeForm.date_debut || !periodeForm.date_fin || createPeriode.isPending} className="w-full">{createPeriode.isPending ? "Création..." : "Créer"}</Button>
                 </DialogContent>
               </Dialog>
             </CardHeader>
@@ -319,17 +276,13 @@ export default function AdminNotes() {
               <Table>
                 <TableHeader><TableRow><TableHead>Libellé</TableHead><TableHead>Début</TableHead><TableHead>Fin</TableHead></TableRow></TableHeader>
                 <TableBody>
-                  {periodes?.length === 0 ? (
-                    <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Aucune période</TableCell></TableRow>
-                  ) : periodes?.map(p => (
-                    <TableRow key={p.id}><TableCell className="font-medium">{p.libelle}</TableCell><TableCell>{p.date_debut}</TableCell><TableCell>{p.date_fin}</TableCell></TableRow>
-                  ))}
+                  {periodes?.length === 0 ? <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Aucune période</TableCell></TableRow>
+                  : periodes?.map(p => <TableRow key={p.id}><TableCell className="font-medium">{p.libelle}</TableCell><TableCell>{p.date_debut}</TableCell><TableCell>{p.date_fin}</TableCell></TableRow>)}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
 
-          {/* Matieres */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-sans">Matières & Coefficients</CardTitle>
@@ -349,9 +302,7 @@ export default function AdminNotes() {
                       </Select>
                     </div>
                   </div>
-                  <Button onClick={() => createMatiere.mutate()} disabled={!matiereForm.nom || createMatiere.isPending} className="w-full">
-                    {createMatiere.isPending ? "Création..." : "Créer"}
-                  </Button>
+                  <Button onClick={() => createMatiere.mutate()} disabled={!matiereForm.nom || createMatiere.isPending} className="w-full">{createMatiere.isPending ? "Création..." : "Créer"}</Button>
                 </DialogContent>
               </Dialog>
             </CardHeader>
@@ -359,9 +310,8 @@ export default function AdminNotes() {
               <Table>
                 <TableHeader><TableRow><TableHead>Matière</TableHead><TableHead>Code</TableHead><TableHead>Coefficient</TableHead><TableHead>Classe</TableHead></TableRow></TableHeader>
                 <TableBody>
-                  {matieres?.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Aucune matière</TableCell></TableRow>
-                  ) : matieres?.map(m => (
+                  {matieres?.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Aucune matière</TableCell></TableRow>
+                  : matieres?.map(m => (
                     <TableRow key={m.id}>
                       <TableCell className="font-medium">{m.nom}</TableCell>
                       <TableCell>{m.code || "—"}</TableCell>
@@ -375,12 +325,9 @@ export default function AdminNotes() {
           </Card>
         </TabsContent>
 
-        {/* SAISIE TAB */}
         <TabsContent value="saisie" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="font-sans">Sélectionner classe, matière et période</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="font-sans">Sélectionner classe, matière et période</CardTitle></CardHeader>
             <CardContent>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -417,9 +364,7 @@ export default function AdminNotes() {
                 </Button>
               </CardHeader>
               <CardContent>
-                {!eleves?.length ? (
-                  <p className="text-muted-foreground">Aucun élève validé dans cette classe.</p>
-                ) : (
+                {!eleves?.length ? <p className="text-muted-foreground">Aucun élève validé dans cette classe.</p> : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -457,7 +402,6 @@ export default function AdminNotes() {
           )}
         </TabsContent>
 
-        {/* BULLETINS TAB */}
         <TabsContent value="bulletins" className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="font-sans">Génération des bulletins</CardTitle></CardHeader>
@@ -508,6 +452,7 @@ export default function AdminNotes() {
                       <TableHead>Matricule</TableHead>
                       <TableHead>Moyenne</TableHead>
                       <TableHead>Mention</TableHead>
+                      <TableHead>PDF</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -518,6 +463,11 @@ export default function AdminNotes() {
                         <TableCell className="font-mono text-sm">{(b as any).eleves?.matricule}</TableCell>
                         <TableCell className="font-bold">{b.moyenne_generale?.toFixed(2)}/20</TableCell>
                         <TableCell>{b.moyenne_generale ? getMention(Number(b.moyenne_generale)) : "—"}</TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="outline" onClick={() => handleBulletinPDF(b)}>
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
