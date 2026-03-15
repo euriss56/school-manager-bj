@@ -748,6 +748,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          lien: string | null
+          lu: boolean
+          message: string
+          school_id: string
+          titre: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lien?: string | null
+          lu?: boolean
+          message: string
+          school_id: string
+          titre: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lien?: string | null
+          lu?: boolean
+          message?: string
+          school_id?: string
+          titre?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       paiements: {
         Row: {
           created_at: string
@@ -1094,7 +1130,13 @@ export type Database = {
     }
     Enums: {
       absence_status: "present" | "absent" | "retard" | "excuse"
-      app_role: "superadmin" | "admin" | "enseignant" | "parent" | "etudiant"
+      app_role:
+        | "superadmin"
+        | "admin"
+        | "enseignant"
+        | "parent"
+        | "etudiant"
+        | "comptable"
       inscription_status: "en_attente" | "valide" | "refuse"
       jour_semaine: "lundi" | "mardi" | "mercredi" | "jeudi" | "vendredi"
       mode_paiement: "especes" | "mtn_money" | "moov_money" | "virement"
@@ -1229,7 +1271,14 @@ export const Constants = {
   public: {
     Enums: {
       absence_status: ["present", "absent", "retard", "excuse"],
-      app_role: ["superadmin", "admin", "enseignant", "parent", "etudiant"],
+      app_role: [
+        "superadmin",
+        "admin",
+        "enseignant",
+        "parent",
+        "etudiant",
+        "comptable",
+      ],
       inscription_status: ["en_attente", "valide", "refuse"],
       jour_semaine: ["lundi", "mardi", "mercredi", "jeudi", "vendredi"],
       mode_paiement: ["especes", "mtn_money", "moov_money", "virement"],
