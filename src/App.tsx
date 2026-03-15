@@ -25,6 +25,7 @@ import AdminAnnonces from "./pages/admin/AdminAnnonces";
 import AdminMessagerie from "./pages/admin/AdminMessagerie";
 import AdminStatistiques from "./pages/admin/AdminStatistiques";
 import AdminParametres from "./pages/admin/AdminParametres";
+import AdminUtilisateurs from "./pages/admin/AdminUtilisateurs";
 
 // Enseignant pages
 import EnseignantLayout from "./pages/enseignant/EnseignantLayout";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="messagerie" element={<AdminMessagerie />} />
               <Route path="statistiques" element={<AdminStatistiques />} />
               <Route path="parametres" element={<AdminParametres />} />
+              <Route path="utilisateurs" element={<AdminUtilisateurs />} />
             </Route>
 
             {/* Enseignant routes */}

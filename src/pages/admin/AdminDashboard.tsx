@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, GraduationCap, CreditCard, TrendingUp } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
@@ -11,17 +12,43 @@ export default function AdminDashboard() {
     queryKey: ["admin-stats", profile?.school_id],
     queryFn: async () => {
       if (!profile?.school_id) return null;
-      const [elevesRes, enseignantsRes, paiementsRes] = await Promise.all([
-        supabase.from("eleves").select("id", { count: "exact", head: true }).eq("school_id", profile.school_id),
+      const [elevesRes, enseignantsRes, paiementsRes, fraisRes] = await Promise.all([
+        supabase.from("eleves").select("id", { count: "exact", head: true }).eq("school_id", profile.school_id).eq("statut_inscription", "valide"),
         supabase.from("profiles").select("id", { count: "exact", head: true }).eq("school_id", profile.school_id).eq("role", "enseignant"),
         supabase.from("paiements").select("montant_paye").eq("school_id", profile.school_id),
+        supabase.from("frais_types").select("id, montant, classe_id").eq("school_id", profile.school_id),
       ]);
-      const totalPaiements = paiementsRes.data?.reduce((sum, p) => sum + Number(p.montant_paye), 0) || 0;
+
+      const totalPaye = paiementsRes.data?.reduce((sum, p) => sum + Number(p.montant_paye), 0) || 0;
+
+      // Taux de recouvrement simplifié
+      const totalAttendu = (fraisRes.data || []).reduce((s, f) => s + Number(f.montant), 0) * (elevesRes.count || 1);
+      const taux = totalAttendu > 0 ? Math.round((totalPaye / totalAttendu) * 100) : 0;
+
       return {
         eleves: elevesRes.count || 0,
         enseignants: enseignantsRes.count || 0,
-        paiements: totalPaiements,
+        paiements: totalPaye,
+        taux: Math.min(taux, 100),
       };
+    },
+    enabled: !!profile?.school_id,
+  });
+
+  const { data: paiementsMensuels } = useQuery({
+    queryKey: ["admin-paiements-chart", profile?.school_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("paiements")
+        .select("montant_paye, date_paiement")
+        .eq("school_id", profile!.school_id!);
+
+      const byMonth: Record<string, number> = {};
+      (data || []).forEach(p => {
+        const m = new Date(p.date_paiement).toLocaleDateString("fr-FR", { month: "short" });
+        byMonth[m] = (byMonth[m] || 0) + Number(p.montant_paye);
+      });
+      return Object.entries(byMonth).map(([mois, montant]) => ({ mois, montant }));
     },
     enabled: !!profile?.school_id,
   });
@@ -30,7 +57,7 @@ export default function AdminDashboard() {
     { label: "Total élèves", value: stats?.eleves || 0, icon: Users, color: "text-secondary" },
     { label: "Enseignants", value: stats?.enseignants || 0, icon: GraduationCap, color: "text-accent" },
     { label: "Paiements (FCFA)", value: (stats?.paiements || 0).toLocaleString("fr-FR"), icon: CreditCard, color: "text-secondary" },
-    { label: "Taux recouvrement", value: "—", icon: TrendingUp, color: "text-accent" },
+    { label: "Taux recouvrement", value: `${stats?.taux || 0}%`, icon: TrendingUp, color: "text-accent" },
   ];
 
   return (
@@ -56,17 +83,25 @@ export default function AdminDashboard() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="font-sans">Alertes récentes</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="font-sans text-base">Paiements récents</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-sm">Aucune alerte pour le moment.</p>
+            {(paiementsMensuels || []).length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={paiementsMensuels}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="mois" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: number) => `${v.toLocaleString("fr-FR")} FCFA`} />
+                  <Bar dataKey="montant" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-muted-foreground text-sm">Aucun paiement enregistré.</p>
+            )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="font-sans">Événements à venir</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="font-sans">Événements à venir</CardTitle></CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-sm">Aucun événement planifié.</p>
           </CardContent>

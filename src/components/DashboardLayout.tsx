@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { GraduationCap, LogOut } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -105,7 +106,8 @@ export default function DashboardLayout({ children, sidebarItems, title }: Dashb
         <div className="flex-1 flex flex-col">
           <header className="h-14 flex items-center border-b border-border bg-background px-4">
             <SidebarTrigger className="mr-4" />
-            <h2 className="text-lg font-semibold text-foreground font-sans">{title}</h2>
+            <h2 className="text-lg font-semibold text-foreground font-sans flex-1">{title}</h2>
+            <NotificationBell />
           </header>
           <main className="flex-1 p-6 bg-muted/30 overflow-auto">
             {children}
