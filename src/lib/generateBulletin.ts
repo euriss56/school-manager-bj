@@ -14,6 +14,9 @@ interface BulletinData {
   mention: string;
   school_nom: string;
   school_ville: string;
+  school_telephone?: string;
+  school_adresse?: string;
+  school_logo_url?: string;
   matieres: {
     nom: string;
     coefficient: number;
@@ -25,19 +28,35 @@ interface BulletinData {
   }[];
 }
 
-export function generateBulletin(data: BulletinData) {
+export async function generateBulletin(data: BulletinData) {
   const doc = new jsPDF();
 
   // En-tête école
   doc.setFillColor(15, 82, 74);
   doc.rect(0, 0, 210, 40, "F");
+
+  // Logo
+  if (data.school_logo_url) {
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = data.school_logo_url!;
+      });
+      doc.addImage(img, "PNG", 10, 5, 28, 28);
+    } catch { /* skip logo if failed */ }
+  }
+
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.text(data.school_nom, 105, 14, { align: "center" });
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(data.school_ville + " — Bénin", 105, 22, { align: "center" });
+  const subLine = [data.school_ville, data.school_adresse, data.school_telephone].filter(Boolean).join(" — ");
+  doc.text(subLine || "Bénin", 105, 22, { align: "center" });
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.text("BULLETIN DE NOTES", 105, 33, { align: "center" });
@@ -61,8 +80,7 @@ export function generateBulletin(data: BulletinData) {
     startY: 82,
     head: [["Matière", "Coeff.", "DS1", "DS2", "Compo", "Moyenne", "Appréciation"]],
     body: data.matieres.map(m => [
-      m.nom,
-      m.coefficient,
+      m.nom, m.coefficient,
       m.note_ds1 !== null ? m.note_ds1.toFixed(2) : "—",
       m.note_ds2 !== null ? m.note_ds2.toFixed(2) : "—",
       m.note_compo !== null ? m.note_compo.toFixed(2) : "—",
@@ -72,13 +90,9 @@ export function generateBulletin(data: BulletinData) {
     theme: "striped",
     headStyles: { fillColor: [15, 82, 74], textColor: 255, fontSize: 9 },
     bodyStyles: { fontSize: 9 },
-    columnStyles: {
-      0: { cellWidth: 50 },
-      6: { cellWidth: 40 },
-    },
+    columnStyles: { 0: { cellWidth: 50 }, 6: { cellWidth: 40 } },
   });
 
-  // Résumé
   const afterTable = (doc as any).lastAutoTable.finalY + 10;
   doc.setFillColor(15, 82, 74);
   doc.rect(10, afterTable, 190, 25, "F");
@@ -89,7 +103,6 @@ export function generateBulletin(data: BulletinData) {
   doc.text(`Rang : ${data.rang}e / ${data.total_eleves}`, 85, afterTable + 10);
   doc.text(`Mention : ${data.mention}`, 150, afterTable + 10);
 
-  // Appréciations
   const afterSummary = afterTable + 35;
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(10);
@@ -98,7 +111,6 @@ export function generateBulletin(data: BulletinData) {
   doc.setDrawColor(15, 82, 74);
   doc.rect(10, afterSummary + 5, 190, 20);
 
-  // Signatures
   const afterAppreciation = afterSummary + 35;
   doc.setFont("helvetica", "normal");
   doc.text("Signature Directeur", 30, afterAppreciation + 15, { align: "center" });
@@ -108,12 +120,11 @@ export function generateBulletin(data: BulletinData) {
   doc.text("Cachet École", 175, afterAppreciation + 15, { align: "center" });
   doc.rect(150, afterAppreciation, 50, 20);
 
-  // Pied de page
   doc.setFillColor(15, 82, 74);
   doc.rect(0, 285, 210, 12, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
-  doc.text("Document officiel — SchoolManager BJ", 105, 292, { align: "center" });
+  doc.text(`Document officiel — ${data.school_nom}`, 105, 292, { align: "center" });
 
   doc.save(`bulletin-${data.eleve_nom}-${data.periode}.pdf`);
 }

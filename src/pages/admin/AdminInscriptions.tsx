@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Upload, Camera, Link2 } from "lucide-react";
 
 export default function AdminInscriptions() {
   const { profile } = useAuth();
@@ -19,10 +19,15 @@ export default function AdminInscriptions() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [linkParentOpen, setLinkParentOpen] = useState<string | null>(null);
+  const [selectedParentId, setSelectedParentId] = useState("");
   const [form, setForm] = useState({
     prenom: "", nom: "", date_naissance: "", lieu_naissance: "", sexe: "M",
     nationalite: "Béninoise", nom_pere: "", telephone_pere: "", nom_mere: "",
     telephone_mere: "", email_parent: "", ancienne_ecole: "", classe_id: "",
+    numero_acte_naissance: "",
   });
 
   const { data: eleves, isLoading } = useQuery({
@@ -42,18 +47,47 @@ export default function AdminInscriptions() {
   const { data: classes } = useQuery({
     queryKey: ["classes", profile?.school_id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("classes")
-        .select("*")
-        .eq("school_id", profile!.school_id!);
+      const { data } = await supabase.from("classes").select("*").eq("school_id", profile!.school_id!);
       return data || [];
     },
     enabled: !!profile?.school_id,
   });
 
+  const { data: parents } = useQuery({
+    queryKey: ["parents", profile?.school_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, email, telephone")
+        .eq("school_id", profile!.school_id!)
+        .eq("role", "parent");
+      return data || [];
+    },
+    enabled: !!profile?.school_id,
+  });
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const createEleve = useMutation({
     mutationFn: async () => {
       const matricule = `MAT-${Date.now().toString(36).toUpperCase()}`;
+      let photo_url = null;
+
+      if (photoFile) {
+        const ext = photoFile.name.split(".").pop();
+        const path = `${profile!.school_id}/${matricule}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("photos-eleves").upload(path, photoFile, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("photos-eleves").getPublicUrl(path);
+        photo_url = urlData.publicUrl;
+      }
+
       const { error } = await supabase.from("eleves").insert({
         school_id: profile!.school_id!,
         matricule,
@@ -70,6 +104,8 @@ export default function AdminInscriptions() {
         email_parent: form.email_parent || null,
         ancienne_ecole: form.ancienne_ecole || null,
         classe_id: form.classe_id || null,
+        numero_acte_naissance: form.numero_acte_naissance || null,
+        photo_url,
         statut_inscription: "en_attente",
       });
       if (error) throw error;
@@ -77,8 +113,10 @@ export default function AdminInscriptions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["eleves"] });
       setOpen(false);
+      setPhotoFile(null);
+      setPhotoPreview(null);
       toast({ title: "Élève inscrit avec succès" });
-      setForm({ prenom: "", nom: "", date_naissance: "", lieu_naissance: "", sexe: "M", nationalite: "Béninoise", nom_pere: "", telephone_pere: "", nom_mere: "", telephone_mere: "", email_parent: "", ancienne_ecole: "", classe_id: "" });
+      setForm({ prenom: "", nom: "", date_naissance: "", lieu_naissance: "", sexe: "M", nationalite: "Béninoise", nom_pere: "", telephone_pere: "", nom_mere: "", telephone_mere: "", email_parent: "", ancienne_ecole: "", classe_id: "", numero_acte_naissance: "" });
     },
     onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
@@ -89,6 +127,19 @@ export default function AdminInscriptions() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["eleves"] }),
+  });
+
+  const linkParent = useMutation({
+    mutationFn: async ({ eleve_id, parent_id }: { eleve_id: string; parent_id: string }) => {
+      const { error } = await supabase.from("parents_eleves").insert({ eleve_id, parent_id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setLinkParentOpen(null);
+      setSelectedParentId("");
+      toast({ title: "Parent lié à l'élève" });
+    },
+    onError: (err: any) => toast({ variant: "destructive", title: "Erreur", description: err.message }),
   });
 
   const filtered = eleves?.filter(e =>
@@ -110,30 +161,56 @@ export default function AdminInscriptions() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Inscrire un élève</DialogTitle></DialogHeader>
-            <div className="grid md:grid-cols-2 gap-4 py-4">
-              <div className="space-y-2"><Label>Prénom *</Label><Input value={form.prenom} onChange={e => setForm(f => ({ ...f, prenom: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Nom *</Label><Input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Date de naissance</Label><Input type="date" value={form.date_naissance} onChange={e => setForm(f => ({ ...f, date_naissance: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Lieu de naissance</Label><Input value={form.lieu_naissance} onChange={e => setForm(f => ({ ...f, lieu_naissance: e.target.value }))} /></div>
-              <div className="space-y-2">
-                <Label>Sexe</Label>
-                <Select value={form.sexe} onValueChange={v => setForm(f => ({ ...f, sexe: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="M">Masculin</SelectItem><SelectItem value="F">Féminin</SelectItem></SelectContent>
-                </Select>
+            <div className="space-y-6 py-4">
+              {/* Photo upload */}
+              <div className="flex justify-center">
+                <Label htmlFor="photo-upload" className="cursor-pointer">
+                  <div className="w-24 h-24 rounded-full border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50 hover:border-primary transition-colors">
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Photo" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-8 h-8 text-muted-foreground" />
+                    )}
+                  </div>
+                  <p className="text-xs text-center mt-1 text-muted-foreground">Photo de l'élève</p>
+                  <input id="photo-upload" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                </Label>
               </div>
-              <div className="space-y-2">
-                <Label>Classe</Label>
-                <Select value={form.classe_id} onValueChange={v => setForm(f => ({ ...f, classe_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                  <SelectContent>{classes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>)}</SelectContent>
-                </Select>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Prénom *</Label><Input value={form.prenom} onChange={e => setForm(f => ({ ...f, prenom: e.target.value }))} /></div>
+                <div className="space-y-2"><Label>Nom *</Label><Input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} /></div>
+                <div className="space-y-2"><Label>Date de naissance</Label><Input type="date" value={form.date_naissance} onChange={e => setForm(f => ({ ...f, date_naissance: e.target.value }))} /></div>
+                <div className="space-y-2"><Label>Lieu de naissance</Label><Input value={form.lieu_naissance} onChange={e => setForm(f => ({ ...f, lieu_naissance: e.target.value }))} /></div>
+                <div className="space-y-2">
+                  <Label>Sexe</Label>
+                  <Select value={form.sexe} onValueChange={v => setForm(f => ({ ...f, sexe: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="M">Masculin</SelectItem><SelectItem value="F">Féminin</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Classe</Label>
+                  <Select value={form.classe_id} onValueChange={v => setForm(f => ({ ...f, classe_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectContent>{classes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label>N° Acte de naissance</Label><Input value={form.numero_acte_naissance} onChange={e => setForm(f => ({ ...f, numero_acte_naissance: e.target.value }))} /></div>
+                <div className="space-y-2"><Label>Nationalité</Label><Input value={form.nationalite} onChange={e => setForm(f => ({ ...f, nationalite: e.target.value }))} /></div>
               </div>
-              <div className="space-y-2"><Label>Nom du père</Label><Input value={form.nom_pere} onChange={e => setForm(f => ({ ...f, nom_pere: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Tél. père</Label><Input value={form.telephone_pere} onChange={e => setForm(f => ({ ...f, telephone_pere: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Nom de la mère</Label><Input value={form.nom_mere} onChange={e => setForm(f => ({ ...f, nom_mere: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Tél. mère</Label><Input value={form.telephone_mere} onChange={e => setForm(f => ({ ...f, telephone_mere: e.target.value }))} /></div>
-              <div className="space-y-2"><Label>Email parent</Label><Input type="email" value={form.email_parent} onChange={e => setForm(f => ({ ...f, email_parent: e.target.value }))} /></div>
+
+              <div className="border-t border-border pt-4">
+                <h3 className="font-semibold text-sm mb-3">Informations parentales</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Nom du père</Label><Input value={form.nom_pere} onChange={e => setForm(f => ({ ...f, nom_pere: e.target.value }))} /></div>
+                  <div className="space-y-2"><Label>Tél. père</Label><Input value={form.telephone_pere} onChange={e => setForm(f => ({ ...f, telephone_pere: e.target.value }))} /></div>
+                  <div className="space-y-2"><Label>Nom de la mère</Label><Input value={form.nom_mere} onChange={e => setForm(f => ({ ...f, nom_mere: e.target.value }))} /></div>
+                  <div className="space-y-2"><Label>Tél. mère</Label><Input value={form.telephone_mere} onChange={e => setForm(f => ({ ...f, telephone_mere: e.target.value }))} /></div>
+                  <div className="space-y-2 md:col-span-2"><Label>Email parent</Label><Input type="email" value={form.email_parent} onChange={e => setForm(f => ({ ...f, email_parent: e.target.value }))} /></div>
+                </div>
+              </div>
+
               <div className="space-y-2"><Label>Ancienne école</Label><Input value={form.ancienne_ecole} onChange={e => setForm(f => ({ ...f, ancienne_ecole: e.target.value }))} /></div>
             </div>
             <Button onClick={() => createEleve.mutate()} disabled={!form.prenom || !form.nom || createEleve.isPending} className="w-full">
@@ -145,20 +222,17 @@ export default function AdminInscriptions() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Rechercher par nom ou matricule..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Rechercher par nom ou matricule..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground">Chargement...</p>
-          ) : (
+          {isLoading ? <p className="text-muted-foreground">Chargement...</p> : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Photo</TableHead>
                   <TableHead>Matricule</TableHead>
                   <TableHead>Nom</TableHead>
                   <TableHead>Classe</TableHead>
@@ -169,21 +243,47 @@ export default function AdminInscriptions() {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Aucun élève inscrit</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Aucun élève inscrit</TableCell></TableRow>
                 ) : filtered.map(e => (
                   <TableRow key={e.id}>
+                    <TableCell>
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {e.photo_url ? <img src={e.photo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-muted-foreground">{e.prenom[0]}{e.nom[0]}</span>}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-mono text-sm">{e.matricule}</TableCell>
                     <TableCell className="font-medium">{e.prenom} {e.nom}</TableCell>
                     <TableCell>{(e as any).classes?.nom || "—"}</TableCell>
                     <TableCell>{e.sexe}</TableCell>
                     <TableCell>{statusBadge(e.statut_inscription)}</TableCell>
                     <TableCell>
-                      {e.statut_inscription === "en_attente" && (
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, statut: "valide" })}>Valider</Button>
-                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => updateStatus.mutate({ id: e.id, statut: "refuse" })}>Refuser</Button>
-                        </div>
-                      )}
+                      <div className="flex gap-1">
+                        {e.statut_inscription === "en_attente" && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: e.id, statut: "valide" })}>Valider</Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => updateStatus.mutate({ id: e.id, statut: "refuse" })}>Refuser</Button>
+                          </>
+                        )}
+                        <Dialog open={linkParentOpen === e.id} onOpenChange={v => { setLinkParentOpen(v ? e.id : null); setSelectedParentId(""); }}>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="ghost" title="Lier un parent"><Link2 className="w-4 h-4" /></Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-sm">
+                            <DialogHeader><DialogTitle>Lier un parent</DialogTitle></DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <Select value={selectedParentId} onValueChange={setSelectedParentId}>
+                                <SelectTrigger><SelectValue placeholder="Sélectionner un parent" /></SelectTrigger>
+                                <SelectContent>
+                                  {parents?.map(p => <SelectItem key={p.id} value={p.id}>{p.prenom} {p.nom} ({p.email})</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                              <Button className="w-full" disabled={!selectedParentId || linkParent.isPending} onClick={() => linkParent.mutate({ eleve_id: e.id, parent_id: selectedParentId })}>
+                                {linkParent.isPending ? "En cours..." : "Lier ce parent"}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
