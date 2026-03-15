@@ -31,11 +31,11 @@ export async function createFedaPayTransaction(
         currency: { iso: transaction.currency || 'XOF' },
         callback_url: transaction.callback_url || window.location.origin,
         customer: {
-          firstname: transaction.customer_name.split(' ')[0],
-          lastname: transaction.customer_name.split(' ').slice(1).join(' ') || '',
-          email: transaction.customer_email || '',
+          firstname: transaction.customer_name.split(' ')[0] || 'Parent',
+          lastname: transaction.customer_name.split(' ').slice(1).join(' ') || 'Eleve',
+          email: transaction.customer_email || 'parent@ecole.bj',
           phone_number: {
-            number: transaction.customer_phone,
+            number: transaction.customer_phone || '22997000000',
             country: 'BJ',
           },
         },
@@ -43,8 +43,9 @@ export async function createFedaPayTransaction(
     });
 
     const data = await response.json();
+    console.log('FedaPay response:', data);
 
-    if (data.v1_transaction) {
+    if (data.v1_transaction?.id) {
       const tokenResponse = await fetch(
         `${baseUrl}/transactions/${data.v1_transaction.id}/token`,
         {
@@ -56,10 +57,13 @@ export async function createFedaPayTransaction(
         }
       );
       const tokenData = await tokenResponse.json();
-      return {
-        url: tokenData.url,
-        id: data.v1_transaction.id.toString(),
-      };
+      console.log('FedaPay token:', tokenData);
+      if (tokenData.token?.token) {
+        return {
+          url: `https://checkout.fedapay.com/${tokenData.token.token}`,
+          id: data.v1_transaction.id.toString(),
+        };
+      }
     }
     return null;
   } catch (error) {
