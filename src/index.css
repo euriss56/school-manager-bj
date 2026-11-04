@@ -2,100 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
-@import '@fontsource/playfair-display/400.css';
-@import '@fontsource/playfair-display/700.css';
 @import '@fontsource/dm-sans/400.css';
 @import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
 @import '@fontsource/dm-sans/700.css';
+@import '@fontsource/playfair-display/600.css';
+@import '@fontsource/playfair-display/700.css';
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 210 65% 14%;
-
+    --background: 90 20% 98%;
+    --foreground: 153 25% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 210 65% 14%;
-
+    --card-foreground: 153 25% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 210 65% 14%;
-
-    --primary: 210 65% 14%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 168 100% 36%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 210 20% 96%;
-    --muted-foreground: 210 15% 45%;
-
-    --accent: 42 50% 54%;
-    --accent-foreground: 210 65% 14%;
-
-    --destructive: 0 84% 60%;
+    --popover-foreground: 153 25% 13%;
+    --primary: 153 31% 17%;
+    --primary-foreground: 90 30% 98%;
+    --secondary: 84 82% 69%;
+    --secondary-foreground: 153 31% 13%;
+    --muted: 100 16% 94%;
+    --muted-foreground: 150 8% 43%;
+    --accent: 84 82% 69%;
+    --accent-foreground: 153 31% 13%;
+    --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 168 100% 36%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 210 65% 10%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 168 100% 36%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 50% 18%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 210 40% 20%;
-    --sidebar-ring: 168 100% 36%;
-
-    --success: 168 100% 36%;
+    --border: 100 13% 88%;
+    --input: 100 13% 88%;
+    --ring: 84 65% 48%;
+    --radius: 0.9rem;
+    --sidebar-background: 153 31% 13%;
+    --sidebar-foreground: 90 25% 92%;
+    --sidebar-primary: 84 82% 69%;
+    --sidebar-primary-foreground: 153 31% 13%;
+    --sidebar-accent: 153 24% 20%;
+    --sidebar-accent-foreground: 90 25% 95%;
+    --sidebar-border: 153 22% 22%;
+    --sidebar-ring: 84 65% 60%;
+    --success: 145 55% 38%;
     --success-foreground: 0 0% 100%;
-    --warning: 42 50% 54%;
-    --warning-foreground: 210 65% 14%;
-
+    --warning: 38 90% 54%;
+    --warning-foreground: 153 31% 13%;
     font-family: 'DM Sans', sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-
   .dark {
-    --background: 210 65% 8%;
-    --foreground: 210 20% 90%;
-    --card: 210 55% 12%;
-    --card-foreground: 210 20% 90%;
-    --popover: 210 55% 12%;
-    --popover-foreground: 210 20% 90%;
-    --primary: 168 100% 36%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 20%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 210 30% 18%;
-    --muted-foreground: 210 15% 55%;
-    --accent: 42 50% 54%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 30%;
+    --background: 153 25% 8%;
+    --foreground: 90 20% 92%;
+    --card: 153 22% 11%;
+    --card-foreground: 90 20% 92%;
+    --popover: 153 22% 11%;
+    --popover-foreground: 90 20% 92%;
+    --primary: 84 70% 62%;
+    --primary-foreground: 153 31% 13%;
+    --secondary: 153 22% 20%;
+    --secondary-foreground: 90 20% 92%;
+    --muted: 153 18% 16%;
+    --muted-foreground: 150 10% 62%;
+    --accent: 84 65% 55%;
+    --accent-foreground: 153 31% 13%;
+    --destructive: 0 62% 38%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 30% 20%;
-    --input: 210 30% 20%;
-    --ring: 168 100% 36%;
-    --sidebar-background: 210 65% 6%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 168 100% 36%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 50% 14%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 210 30% 15%;
-    --sidebar-ring: 168 100% 36%;
+    --border: 153 18% 22%;
+    --input: 153 18% 22%;
+    --ring: 84 65% 55%;
+    --sidebar-background: 153 28% 7%;
+    --sidebar-foreground: 90 20% 90%;
+    --sidebar-primary: 84 70% 62%;
+    --sidebar-primary-foreground: 153 31% 13%;
+    --sidebar-accent: 153 20% 15%;
+    --sidebar-accent-foreground: 90 20% 90%;
+    --sidebar-border: 153 18% 17%;
+    --sidebar-ring: 84 65% 55%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-background text-foreground; min-width: 320px; }
+  h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; letter-spacing: -0.035em; }
+  button, input, textarea, select { font: inherit; }
+  ::selection { background: hsl(var(--secondary)); color: hsl(var(--primary)); }
+}
+
+@layer components {
+  .dashboard-main { background: radial-gradient(ellipse at 85% 0%, rgba(197,243,107,.10), transparent 34%), #f5f7f4; }
+  .dashboard-main h1 { color: #172b23; font-weight: 750; letter-spacing: -0.045em; }
+  .dashboard-main [data-slot="card"], .dashboard-main .rounded-xl.border, .dashboard-main .rounded-lg.border {
+    border-color: #e8ede7;
+    box-shadow: 0 2px 10px rgba(24, 44, 33, .025);
   }
-  body {
-    @apply bg-background text-foreground;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
-  }
+  .dashboard-main [data-slot="card"] { border-radius: 18px; }
+  .dashboard-main table thead { background: #f7f9f6; }
+  .dashboard-main table th { color: #748178; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .dashboard-main input, .dashboard-main select, .dashboard-main textarea { border-radius: 10px; }
+  .dashboard-main button { transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  .dashboard-main button:active { transform: translateY(1px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
