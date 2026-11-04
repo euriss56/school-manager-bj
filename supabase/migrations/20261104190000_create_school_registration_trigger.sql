@@ -35,11 +35,8 @@ BEGIN
     RAISE EXCEPTION 'Certaines informations dépassent la longueur autorisée';
   END IF;
 
-  BEGIN
-    v_plan := COALESCE(NEW.raw_user_meta_data ->> 'plan', 'basique')::public.school_plan;
-  EXCEPTION WHEN invalid_text_representation THEN
-    RAISE EXCEPTION 'Formule d’abonnement invalide';
-  END;
+  -- Public registration must never grant a paid plan by editing user metadata.
+  v_plan := 'basique'::public.school_plan;
 
   INSERT INTO public.schools (
     nom, type, ville, adresse, telephone, email, plan, statut, code_unique
