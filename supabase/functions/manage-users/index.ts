@@ -36,6 +36,22 @@ serve(async (req) => {
       return json({ error: "Accès refusé" }, 403);
     }
 
+    // School administrators may manage users only while their school is approved.
+    if (callerProfile.role !== "superadmin") {
+      if (!callerProfile.school_id) {
+        return json({ error: "Aucun établissement associé à votre compte." }, 403);
+      }
+      const { data: callerSchool, error: schoolError } = await supabaseAdmin
+        .from("schools")
+        .select("statut")
+        .eq("id", callerProfile.school_id)
+        .maybeSingle();
+      if (schoolError) throw schoolError;
+      if (!callerSchool || callerSchool.statut !== "actif") {
+        return json({ error: "Votre établissement n'est pas encore validé ou a été suspendu." }, 403);
+      }
+    }
+
     const body = await req.json();
     const { action } = body;
     const isSuperadmin = callerProfile.role === "superadmin";
