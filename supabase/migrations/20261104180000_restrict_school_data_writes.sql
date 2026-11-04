@@ -42,12 +42,14 @@ USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(aut
 CREATE POLICY "Admins create classes"
 ON public.classes FOR INSERT TO authenticated
 WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin')
-  AND EXISTS (SELECT 1 FROM public.annees_scolaires a WHERE a.id = annee_id AND a.school_id = school_id));
+  AND EXISTS (SELECT 1 FROM public.annees_scolaires a
+    WHERE a.id = public.classes.annee_id AND a.school_id = public.classes.school_id));
 CREATE POLICY "Admins update classes"
 ON public.classes FOR UPDATE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'))
 WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin')
-  AND EXISTS (SELECT 1 FROM public.annees_scolaires a WHERE a.id = annee_id AND a.school_id = school_id));
+  AND EXISTS (SELECT 1 FROM public.annees_scolaires a
+    WHERE a.id = public.periodes.annee_id AND a.school_id = public.periodes.school_id));
 CREATE POLICY "Admins delete classes"
 ON public.classes FOR DELETE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'));
@@ -81,7 +83,9 @@ WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_rol
 CREATE POLICY "Admins update periods"
 ON public.periodes FOR UPDATE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'))
-WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'));
+WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin')
+  AND EXISTS (SELECT 1 FROM public.annees_scolaires a
+    WHERE a.id = public.periodes.annee_id AND a.school_id = public.periodes.school_id));
 CREATE POLICY "Admins delete periods"
 ON public.periodes FOR DELETE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'));
@@ -132,8 +136,8 @@ ON public.paiements FOR INSERT TO authenticated
 WITH CHECK (
   school_id = public.get_user_school_id(auth.uid())
   AND (public.has_role(auth.uid(),'admin') OR public.has_role(auth.uid(),'comptable'))
-  AND EXISTS (SELECT 1 FROM public.eleves e WHERE e.id = eleve_id AND e.school_id = school_id)
-  AND EXISTS (SELECT 1 FROM public.frais_types f WHERE f.id = frais_type_id AND f.school_id = school_id)
+  AND EXISTS (SELECT 1 FROM public.eleves e WHERE e.id = public.paiements.eleve_id AND e.school_id = public.paiements.school_id)
+  AND EXISTS (SELECT 1 FROM public.frais_types f WHERE f.id = public.paiements.frais_type_id AND f.school_id = public.paiements.school_id)
 );
 CREATE POLICY "Finance staff update payments"
 ON public.paiements FOR UPDATE TO authenticated
@@ -150,7 +154,7 @@ ON public.messages FOR INSERT TO authenticated
 WITH CHECK (
   expediteur_id = auth.uid()
   AND school_id = public.get_user_school_id(auth.uid())
-  AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = destinataire_id AND p.school_id = school_id)
+  AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = public.messages.destinataire_id AND p.school_id = public.messages.school_id)
 );
 CREATE POLICY "Recipients mark messages read"
 ON public.messages FOR UPDATE TO authenticated
