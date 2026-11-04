@@ -22,7 +22,7 @@ const plans = [
 
 export default function RegisterSchool() {
   const [form, setForm] = useState({
-    nom_ecole: "", type_ecole: "", ville: "", adresse: "",
+    nom_ecole: "", prenom_admin: "", type_ecole: "", ville: "", adresse: "",
     telephone: "", email: "", nb_eleves: "", plan: "basique", password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -42,6 +42,7 @@ export default function RegisterSchool() {
           emailRedirectTo: window.location.origin,
           data: {
             register_school: "true",
+            admin_first_name: form.prenom_admin.trim(),
             school_name: form.nom_ecole.trim(),
             school_type: form.type_ecole,
             city: form.ville,
@@ -116,6 +117,10 @@ export default function RegisterSchool() {
 
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label>Prénom de l’administrateur *</Label>
+              <Input required maxLength={80} value={form.prenom_admin} onChange={e => update("prenom_admin", e.target.value)} placeholder="Ex : Jean" />
+            </div>
+            <div className="space-y-2">
               <Label>Téléphone du directeur *</Label>
               <Input required type="tel" value={form.telephone} onChange={e => update("telephone", e.target.value)} placeholder="+229 97 00 00 00" />
             </div>
@@ -143,7 +148,7 @@ export default function RegisterSchool() {
 
           <div className="space-y-2">
             <Label>Mot de passe administrateur *</Label>
-            <Input required type="password" value={form.password} onChange={e => update("password", e.target.value)} placeholder="Minimum 6 caractères" minLength={6} />
+            <Input required type="password" value={form.password} onChange={e => update("password", e.target.value)} placeholder="Minimum 8 caractères" minLength={8} />
           </div>
 
           <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
