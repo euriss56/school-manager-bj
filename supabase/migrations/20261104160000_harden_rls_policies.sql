@@ -175,3 +175,35 @@ WITH CHECK (
 );
 
 -- Ensure all tenant-linked tables require authenticated access for reads.
+
+-- The application stores roles in profiles during school registration, while older
+-- accounts may also have entries in user_roles. Accept either source.
+CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role public.app_role)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles p
+    WHERE p.id = _user_id AND p.role = _role AND p.is_active = true
+  ) OR EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    WHERE ur.user_id = _user_id AND ur.role = _role
+  );
+$$;
+
+-- Only school administrators (or platform superadmins) may change school settings.
+DROP POLICY IF EXISTS "Admin can update own school" ON public.schools;
+CREATE POLICY "School admins update their own school"
+ON public.schools FOR UPDATE TO authenticated
+USING (
+  id = public.get_user_school_id(auth.uid())
+  AND public.has_role(auth.uid(), 'admin')
+)
+WITH CHECK (
+  id = public.get_user_school_id(auth.uid())
+  AND public.has_role(auth.uid(), 'admin')
+  OR public.has_role(auth.uid(), 'superadmin')
+);
