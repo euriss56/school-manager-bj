@@ -28,7 +28,7 @@ export default function Login() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role, is_active")
+        .select("role, is_active, school_id")
         .eq("id", signInData.user.id)
         .maybeSingle();
 
@@ -40,6 +40,20 @@ export default function Login() {
       if (!profile.is_active) {
         await supabase.auth.signOut();
         throw new Error("Votre compte est désactivé. Contactez l'administrateur de votre établissement.");
+      }
+
+      if (profile.school_id) {
+        const { data: school, error: schoolError } = await supabase
+          .from("schools")
+          .select("statut")
+          .eq("id", profile.school_id)
+          .maybeSingle();
+
+        if (schoolError) throw schoolError;
+        if (!school || school.statut !== "actif") {
+          await supabase.auth.signOut();
+          throw new Error("Votre établissement est encore en attente de validation ou a été suspendu. Contactez notre équipe.");
+        }
       }
 
       const roleRoutes: Record<string, string> = {
