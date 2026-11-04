@@ -2,16 +2,30 @@
 -- every authenticated user in a school (including parents/students) could otherwise
 -- create or modify academic and financial records.
 
--- Academic structure
-DO $$
-DECLARE t TEXT;
-BEGIN
-  FOREACH t IN ARRAY ARRAY['annees_scolaires','classes','eleves','matieres','periodes','frais_types','emplois_du_temps','annonces','ressources'] LOOP
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Manage_' || t, t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Update_' || t, t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', 'Delete_' || t, t);
-  END LOOP;
-END $$;
+-- Remove the original permissive mutation policies (policy names contain spaces).
+DROP POLICY IF EXISTS "Manage annees_scolaires" ON public.annees_scolaires;
+DROP POLICY IF EXISTS "Update annees_scolaires" ON public.annees_scolaires;
+DROP POLICY IF EXISTS "Delete annees_scolaires" ON public.annees_scolaires;
+DROP POLICY IF EXISTS "Manage classes" ON public.classes;
+DROP POLICY IF EXISTS "Update classes" ON public.classes;
+DROP POLICY IF EXISTS "Delete classes" ON public.classes;
+DROP POLICY IF EXISTS "Manage eleves" ON public.eleves;
+DROP POLICY IF EXISTS "Update eleves" ON public.eleves;
+DROP POLICY IF EXISTS "Delete eleves" ON public.eleves;
+DROP POLICY IF EXISTS "Manage matieres" ON public.matieres;
+DROP POLICY IF EXISTS "Update matieres" ON public.matieres;
+DROP POLICY IF EXISTS "Delete matieres" ON public.matieres;
+DROP POLICY IF EXISTS "Manage periodes" ON public.periodes;
+DROP POLICY IF EXISTS "Update periodes" ON public.periodes;
+DROP POLICY IF EXISTS "Manage frais_types" ON public.frais_types;
+DROP POLICY IF EXISTS "Update frais_types" ON public.frais_types;
+DROP POLICY IF EXISTS "Delete frais_types" ON public.frais_types;
+DROP POLICY IF EXISTS "Manage emplois_du_temps" ON public.emplois_du_temps;
+DROP POLICY IF EXISTS "Update emplois_du_temps" ON public.emplois_du_temps;
+DROP POLICY IF EXISTS "Delete emplois_du_temps" ON public.emplois_du_temps;
+DROP POLICY IF EXISTS "Create annonces" ON public.annonces;
+DROP POLICY IF EXISTS "Create ressources" ON public.ressources;
+DROP POLICY IF EXISTS "Delete ressources" ON public.ressources;
 
 -- Keep the existing SELECT policies; make all mutations admin-only and same-school.
 CREATE POLICY "Admins create school years"
