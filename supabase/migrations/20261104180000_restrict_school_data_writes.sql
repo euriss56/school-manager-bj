@@ -49,7 +49,7 @@ ON public.classes FOR UPDATE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'))
 WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin')
   AND EXISTS (SELECT 1 FROM public.annees_scolaires a
-    WHERE a.id = public.periodes.annee_id AND a.school_id = public.periodes.school_id));
+    WHERE a.id = public.classes.annee_id AND a.school_id = public.classes.school_id));
 CREATE POLICY "Admins delete classes"
 ON public.classes FOR DELETE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'));
@@ -79,7 +79,8 @@ USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(aut
 CREATE POLICY "Admins create periods"
 ON public.periodes FOR INSERT TO authenticated
 WITH CHECK (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin')
-  AND EXISTS (SELECT 1 FROM public.annees_scolaires a WHERE a.id = annee_id AND a.school_id = school_id));
+  AND EXISTS (SELECT 1 FROM public.annees_scolaires a
+    WHERE a.id = public.periodes.annee_id AND a.school_id = public.periodes.school_id));
 CREATE POLICY "Admins update periods"
 ON public.periodes FOR UPDATE TO authenticated
 USING (school_id = public.get_user_school_id(auth.uid()) AND public.has_role(auth.uid(),'admin'))
