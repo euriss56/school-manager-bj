@@ -13,6 +13,9 @@ export default function Footer() {
             <p className="text-sm opacity-80">
               Le logiciel de gestion scolaire conçu pour les établissements du Bénin.
             </p>
+            <p className="text-sm opacity-80 mt-3">
+              Conçu et développé par <span className="font-semibold">EURISS WEB</span> — Euriss Fanou.
+            </p>
           </div>
           <div>
             <h4 className="font-semibold mb-3 font-sans">Produit</h4>
@@ -25,8 +28,16 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-3 font-sans">Contact</h4>
             <ul className="space-y-2 text-sm opacity-80">
-              <li>contact@schoolmanager.bj</li>
-              <li>+229 97 00 00 00</li>
+              <li>
+                <a href="mailto:fanoueuriss@gmail.com" className="hover:opacity-100">
+                  fanoueuriss@gmail.com
+                </a>
+              </li>
+              <li>
+                <a href="https://wa.me/2290141675784" target="_blank" rel="noreferrer" className="hover:opacity-100">
+                  WhatsApp : +229 01 41 67 57 84
+                </a>
+              </li>
               <li>Cotonou, Bénin</li>
             </ul>
           </div>
@@ -40,7 +51,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-sm opacity-60">
-          © 2025 SchoolManager. Tous droits réservés.
+          © 2026 SchoolManager BJ. Tous droits réservés.
         </div>
       </div>
     </footer>
