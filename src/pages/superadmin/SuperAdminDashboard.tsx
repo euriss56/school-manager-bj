@@ -11,10 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const sidebarItems = [
   { title: "Tableau de bord", url: "/superadmin", icon: Home },
-  { title: "Écoles", url: "/superadmin/ecoles", icon: Building2 },
-  { title: "Utilisateurs", url: "/superadmin/utilisateurs", icon: Users },
-  { title: "Abonnements", url: "/superadmin/abonnements", icon: CreditCard },
-  { title: "Contacts", url: "/superadmin/contacts", icon: Mail },
 ];
 
 export default function SuperAdminDashboard() {
