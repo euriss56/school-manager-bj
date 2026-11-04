@@ -33,9 +33,11 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
-  
-  if (profile && !allowedRoles.includes(profile.role)) {
+  if (!user || !profile || !profile.is_active) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(profile.role)) {
     return <Navigate to={getRoleRedirect(profile.role)} replace />;
   }
 
