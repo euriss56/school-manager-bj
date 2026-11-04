@@ -19,17 +19,21 @@ export default function AdminDashboard() {
         supabase.from("frais_types").select("id, montant, classe_id").eq("school_id", profile.school_id),
       ]);
 
-      const totalPaye = paiementsRes.data?.reduce((sum, p) => sum + Number(p.montant_paye), 0) || 0;
+      if (elevesRes.error) throw elevesRes.error;
+      if (enseignantsRes.error) throw enseignantsRes.error;
+      if (paiementsRes.error) throw paiementsRes.error;
+      if (fraisRes.error) throw fraisRes.error;
 
-      // Taux de recouvrement simplifié
-      const totalAttendu = (fraisRes.data || []).reduce((s, f) => s + Number(f.montant), 0) * (elevesRes.count || 1);
-      const taux = totalAttendu > 0 ? Math.round((totalPaye / totalAttendu) * 100) : 0;
+      const totalPaye = (paiementsRes.data || []).reduce((sum, p) => sum + Number(p.montant_paye || 0), 0);
+      // Sum of configured fee amounts is not a collection rate: fee frequency
+      // and class assignment must be accounted for before calculating that metric.
+      const fraisConfigures = (fraisRes.data || []).reduce((sum, fee) => sum + Number(fee.montant || 0), 0);
 
       return {
         eleves: elevesRes.count || 0,
         enseignants: enseignantsRes.count || 0,
         paiements: totalPaye,
-        taux: Math.min(taux, 100),
+        fraisConfigures,
       };
     },
     enabled: !!profile?.school_id,
@@ -57,7 +61,7 @@ export default function AdminDashboard() {
     { label: "Total élèves", value: stats?.eleves || 0, icon: Users, color: "text-secondary" },
     { label: "Enseignants", value: stats?.enseignants || 0, icon: GraduationCap, color: "text-accent" },
     { label: "Paiements (FCFA)", value: (stats?.paiements || 0).toLocaleString("fr-FR"), icon: CreditCard, color: "text-secondary" },
-    { label: "Taux recouvrement", value: `${stats?.taux || 0}%`, icon: TrendingUp, color: "text-accent" },
+    { label: "Frais configurés (FCFA)", value: (stats?.fraisConfigures || 0).toLocaleString("fr-FR"), icon: TrendingUp, color: "text-accent" },
   ];
 
   return (
