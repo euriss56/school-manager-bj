@@ -19,19 +19,28 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Utilisateur non trouvé");
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (signInError) throw signInError;
+      if (!signInData.user) throw new Error("Utilisateur non trouvé.");
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+        .select("role, is_active")
+        .eq("id", signInData.user.id)
+        .maybeSingle();
 
-      const role = String(profile?.role || "etudiant").trim();
+      if (profileError) throw profileError;
+      if (!profile) {
+        await supabase.auth.signOut();
+        throw new Error("Aucun profil n'est associé à ce compte. Contactez l'administrateur.");
+      }
+      if (!profile.is_active) {
+        await supabase.auth.signOut();
+        throw new Error("Votre compte est désactivé. Contactez l'administrateur de votre établissement.");
+      }
 
       const roleRoutes: Record<string, string> = {
         superadmin: "/superadmin",
@@ -42,10 +51,13 @@ export default function Login() {
         comptable: "/comptable",
       };
 
-      console.log("Role détecté:", role);
-console.log("Route:", roleRoutes[role]);
+      const destination = roleRoutes[profile.role];
+      if (!destination) {
+        await supabase.auth.signOut();
+        throw new Error("Le rôle de ce compte n'est pas reconnu. Contactez l'administrateur.");
+      }
 
-navigate(roleRoutes[role] || "/");
+      navigate(destination, { replace: true });
     } catch (error: any) {
       toast({
         variant: "destructive",
