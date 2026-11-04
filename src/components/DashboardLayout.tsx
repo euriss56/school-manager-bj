@@ -56,7 +56,7 @@ function SidebarNav({ items, title }: { items: SidebarItem[]; title: string }) {
               {items.map((item) => {
                 const active = location.pathname === item.url || (item.url !== "/admin" && location.pathname.startsWith(item.url + "/"));
                 return <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} className="h-11 rounded-xl px-3 text-white/65 transition-all duration-200 hover:bg-white/[0.07] hover:text-white data-[active=true]:bg-[#c5f36b] data-[active=true]:font-semibold data-[active=true]:text-[#10251f]">
+                  <SidebarMenuButton asChild isActive={active} tooltip={item.title} className="h-11 rounded-xl px-3 text-white/65 transition-all duration-200 hover:bg-white/[0.07] hover:text-white data-[active=true]:bg-[#c5f36b] data-[active=true]:font-semibold data-[active=true]:text-[#10251f]">
                     <NavLink to={item.url} end className="flex items-center gap-3" activeClassName="bg-[#c5f36b] text-[#10251f] font-semibold shadow-md shadow-black/10">
                       <item.icon className="h-[18px] w-[18px] shrink-0" />
                       {!collapsed && <span className="text-[13px]">{item.title}</span>}
