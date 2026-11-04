@@ -4,13 +4,11 @@
 -- Profiles: users may read same-school profiles, but cannot change their role or school.
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
-CREATE POLICY "Authenticated users can create a non-privileged own profile"
-ON public.profiles FOR INSERT TO authenticated
-WITH CHECK (
-  id = auth.uid()
-  AND role IN ('admin', 'enseignant', 'parent', 'etudiant', 'comptable')
-  AND is_active = true
-);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admin can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view profiles in their school" ON public.profiles;
+-- No client-side INSERT policy: the trusted registration trigger creates profiles.
 CREATE POLICY "Users can update safe own profile fields"
 ON public.profiles FOR UPDATE TO authenticated
 USING (id = auth.uid())
