@@ -22,7 +22,7 @@ const plans = [
 
 export default function RegisterSchool() {
   const [form, setForm] = useState({
-    nom_ecole: "", type_ecole: "", ville: "", adresse: "",
+    nom_ecole: "", prenom_admin: "", type_ecole: "", ville: "", adresse: "",
     telephone: "", email: "", nb_eleves: "", plan: "basique", password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -35,55 +35,24 @@ export default function RegisterSchool() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: authError } = await supabase.auth.signUp({
         email: form.email.trim().toLowerCase(),
         password: form.password,
-        options: { emailRedirectTo: window.location.origin },
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            register_school: "true",
+            admin_first_name: form.prenom_admin.trim(),
+            school_name: form.nom_ecole.trim(),
+            school_type: form.type_ecole,
+            city: form.ville,
+            address: form.adresse.trim(),
+            phone: form.telephone.trim(),
+            plan: form.plan,
+          },
+        },
       });
       if (authError) throw authError;
-      if (!authData.user) {
-        throw new Error("Le compte utilisateur n'a pas pu être créé. Réessayez.");
-      }
-
-      // A random suffix avoids collisions caused by the previous 4-digit timestamp code.
-      const code = `ECO-BJ-${crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()}`;
-      const { data: school, error: schoolError } = await supabase
-        .from("schools")
-        .insert({
-          nom: form.nom_ecole.trim(),
-          type: form.type_ecole,
-          ville: form.ville,
-          adresse: form.adresse.trim(),
-          telephone: form.telephone.trim(),
-          email: form.email.trim().toLowerCase(),
-          plan: form.plan as "basique" | "pro" | "premium",
-          statut: "en_attente" as const,
-          code_unique: code,
-        } as any)
-        .select("id")
-        .single();
-
-      if (schoolError) {
-        throw new Error(`Compte créé, mais la création de l'établissement a échoué : ${schoolError.message}`);
-      }
-      if (!school?.id) {
-        throw new Error("L'établissement a été créé sans identifiant retourné. Contactez l'assistance avant de recommencer.");
-      }
-
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: authData.user.id,
-        school_id: school.id,
-        prenom: "Admin",
-        nom: form.nom_ecole.trim(),
-        email: form.email.trim().toLowerCase(),
-        role: "admin",
-        telephone: form.telephone.trim(),
-        is_active: true,
-      });
-
-      if (profileError) {
-        throw new Error(`Établissement créé, mais le profil administrateur n'a pas été créé : ${profileError.message}. Contactez l'assistance pour finaliser l'inscription.`);
-      }
 
       toast({
         title: "Inscription réussie !",
@@ -148,6 +117,10 @@ export default function RegisterSchool() {
 
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label>Prénom de l’administrateur *</Label>
+              <Input required maxLength={80} value={form.prenom_admin} onChange={e => update("prenom_admin", e.target.value)} placeholder="Ex : Jean" />
+            </div>
+            <div className="space-y-2">
               <Label>Téléphone du directeur *</Label>
               <Input required type="tel" value={form.telephone} onChange={e => update("telephone", e.target.value)} placeholder="+229 97 00 00 00" />
             </div>
@@ -175,7 +148,7 @@ export default function RegisterSchool() {
 
           <div className="space-y-2">
             <Label>Mot de passe administrateur *</Label>
-            <Input required type="password" value={form.password} onChange={e => update("password", e.target.value)} placeholder="Minimum 6 caractères" minLength={6} />
+            <Input required type="password" value={form.password} onChange={e => update("password", e.target.value)} placeholder="Minimum 8 caractères" minLength={8} />
           </div>
 
           <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
